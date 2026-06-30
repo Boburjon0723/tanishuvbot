@@ -37,47 +37,55 @@ def format_profile(user: dict) -> str:
 async def show_next_profile(
     message: Message, state: FSMContext, db: Database, viewer_id: int
 ) -> None:
-    viewer = await get_user(db, viewer_id)
-    if not viewer:
-        await message.answer("Avval ro'yxatdan o'ting: /start")
-        return
-
-    if not viewer["is_active"]:
-        await message.answer(
-            "Profilingiz muzlatilgan. Qidiruv uchun profilni faollashtiring.",
-            reply_markup=get_main_menu(),
-        )
-        return
-
-    profile = await get_next_profile(db, viewer_id, viewer["target_gender"])
-    if not profile:
-        await state.update_data(current_profile_id=None)
-        await message.answer(
-            "😔 Hozircha mos anketalar tugadi.\nKeyinroq qayta urinib ko'ring!",
-            reply_markup=get_main_menu(),
-        )
-        return
-
-    await state.update_data(current_profile_id=profile["telegram_id"])
     try:
-        await message.answer_photo(
-            photo=profile["photo_id"],
-            caption=format_profile(profile),
-            reply_markup=get_search_keyboard(profile["telegram_id"]),
-            parse_mode="HTML",
-        )
+        viewer = await get_user(db, viewer_id)
+        if not viewer:
+            await message.answer("Avval ro'yxatdan o'ting: /start")
+            return
+
+        if not bool(viewer.get("is_active")):
+            await message.answer(
+                "Profilingiz muzlatilgan. Qidiruv uchun profilni faollashtiring.",
+                reply_markup=get_main_menu(),
+            )
+            return
+
+        profile = await get_next_profile(db, viewer_id, viewer["target_gender"])
+        if not profile:
+            await state.update_data(current_profile_id=None)
+            await message.answer(
+                "😔 Hozircha mos anketalar tugadi.\nKeyinroq qayta urinib ko'ring!",
+                reply_markup=get_main_menu(),
+            )
+            return
+
+        await state.update_data(current_profile_id=profile["telegram_id"])
+        try:
+            await message.answer_photo(
+                photo=profile["photo_id"],
+                caption=format_profile(profile),
+                reply_markup=get_search_keyboard(profile["telegram_id"]),
+                parse_mode="HTML",
+            )
+        except Exception as exc:
+            logger.exception("Anketa rasmini yuborib bo'lmadi: %s", exc)
+            await message.answer(
+                format_profile(profile),
+                reply_markup=get_search_keyboard(profile["telegram_id"]),
+                parse_mode="HTML",
+            )
     except Exception as exc:
-        logger.exception("Anketa rasmini yuborib bo'lmadi: %s", exc)
+        logger.exception("Qidiruvda xato: %s", exc)
         await message.answer(
-            format_profile(profile),
-            reply_markup=get_search_keyboard(profile["telegram_id"]),
-            parse_mode="HTML",
+            "Qidiruvda xatolik yuz berdi. Iltimos, /start bosing va qayta urinib ko'ring.",
+            reply_markup=get_main_menu(),
         )
 
 
 @router.message(F.text == "🔍 Sherik qidirish")
 async def start_search(message: Message, state: FSMContext, db: Database) -> None:
-    await state.set_state(None)
+    await state.clear()
+    logger.info("Qidiruv boshlandi: user_id=%s", message.from_user.id)
     await show_next_profile(message, state, db, message.from_user.id)
 
 

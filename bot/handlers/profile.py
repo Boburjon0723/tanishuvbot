@@ -1,4 +1,5 @@
 from aiogram import F, Router
+from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
 from bot.keyboards.inline import get_profile_keyboard
@@ -28,7 +29,8 @@ def format_own_profile(user: dict, premium: bool = False) -> str:
 
 
 @router.message(F.text == "👤 Mening profilim")
-async def show_profile(message: Message, db: Database) -> None:
+async def show_profile(message: Message, state: FSMContext, db: Database) -> None:
+    await state.clear()
     user = await get_user(db, message.from_user.id)
     if not user:
         await message.answer("Avval ro'yxatdan o'ting: /start")

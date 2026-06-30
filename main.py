@@ -6,6 +6,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import ErrorEvent
 
 from bot.handlers import chat, matches, payment, profile, registration, search, shop, start
 from bot.middlewares.db import DatabaseMiddleware
@@ -28,14 +29,18 @@ async def main() -> None:
 
     dp.update.middleware(DatabaseMiddleware(db))
 
+    @dp.errors()
+    async def on_error(event: ErrorEvent) -> None:
+        logger.exception("Handler xatosi: %s", event.exception)
+
     dp.include_router(start.router)
-    dp.include_router(registration.router)
     dp.include_router(search.router)
     dp.include_router(profile.router)
+    dp.include_router(matches.router)
     dp.include_router(payment.router)
     dp.include_router(shop.router)
     dp.include_router(chat.router)
-    dp.include_router(matches.router)
+    dp.include_router(registration.router)
 
     await db.connect()
     logger.info("Bot ishga tushmoqda...")

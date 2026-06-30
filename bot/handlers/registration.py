@@ -9,6 +9,7 @@ from bot.keyboards.inline import (
     TERMS_KEYBOARD,
     get_main_menu,
 )
+from bot.keyboards.menu import MAIN_MENU_TEXTS
 from bot.states.registration import RegistrationStates
 from config.settings import get_settings
 from database.connections import Database
@@ -38,7 +39,7 @@ async def terms_decline(callback: CallbackQuery, state: FSMContext) -> None:
     await callback.answer()
 
 
-@router.message(RegistrationStates.name)
+@router.message(RegistrationStates.name, ~F.text.in_(MAIN_MENU_TEXTS))
 async def process_name(message: Message, state: FSMContext) -> None:
     name = (message.text or "").strip()
     if len(name) < 2 or len(name) > 50:
@@ -49,7 +50,7 @@ async def process_name(message: Message, state: FSMContext) -> None:
     await message.answer("Yoshingizni kiriting (faqat raqam, 18+):")
 
 
-@router.message(RegistrationStates.age)
+@router.message(RegistrationStates.age, ~F.text.in_(MAIN_MENU_TEXTS))
 async def process_age(message: Message, state: FSMContext) -> None:
     text = (message.text or "").strip()
     if not text.isdigit():
@@ -85,7 +86,7 @@ async def process_target_gender(callback: CallbackQuery, state: FSMContext) -> N
     await callback.answer()
 
 
-@router.message(RegistrationStates.city)
+@router.message(RegistrationStates.city, ~F.text.in_(MAIN_MENU_TEXTS))
 async def process_city(message: Message, state: FSMContext) -> None:
     city = (message.text or "").strip()
     if len(city) < 2 or len(city) > 80:
@@ -115,7 +116,7 @@ async def process_photo_invalid(message: Message) -> None:
     await message.answer("Iltimos, rasm yuboring 📸")
 
 
-@router.message(RegistrationStates.bio)
+@router.message(RegistrationStates.bio, ~F.text.in_(MAIN_MENU_TEXTS))
 async def process_bio(message: Message, state: FSMContext, db: Database) -> None:
     text = (message.text or "").strip()
     bio = "" if text == "⏭ O'tkazib yuborish" else text

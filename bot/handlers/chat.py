@@ -22,16 +22,7 @@ from database.queries import (
     is_user_premium,
 )
 
-router = Router()
-
-MENU_BUTTONS = {
-    "🔍 Sherik qidirish",
-    "👤 Mening profilim",
-    "💕 Mosliklarim",
-    "⭐ Premium",
-    "🛍 Do'kon",
-    "💬 Xabarlar",
-}
+from bot.keyboards.menu import MAIN_MENU_TEXTS
 
 
 async def can_use_chat(db: Database, user_id: int) -> bool:
@@ -145,7 +136,7 @@ async def close_chat(message: Message, state: FSMContext) -> None:
     await message.answer("Chat yopildi.", reply_markup=get_main_menu())
 
 
-@router.message(ChatStates.typing, F.text, ~F.text.in_(MENU_BUTTONS))
+@router.message(ChatStates.typing, F.text, ~F.text.in_(MAIN_MENU_TEXTS))
 async def send_chat_message(
     message: Message, state: FSMContext, db: Database
 ) -> None:
