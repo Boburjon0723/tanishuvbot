@@ -24,6 +24,8 @@ from database.queries import (
 
 from bot.keyboards.menu import MAIN_MENU_TEXTS
 
+router = Router()
+
 
 async def can_use_chat(db: Database, user_id: int) -> bool:
     settings = get_settings()
