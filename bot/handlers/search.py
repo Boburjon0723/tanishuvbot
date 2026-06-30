@@ -1,8 +1,14 @@
+import logging
+
 from aiogram import F, Router
 from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery, Message
 
-from bot.keyboards.inline import get_main_menu, get_reply_inline_keyboard
+from bot.keyboards.inline import (
+    get_main_menu,
+    get_reply_inline_keyboard,
+    get_search_keyboard,
+)
 from database.connections import Database
 from database.queries import (
     add_action,
@@ -13,6 +19,7 @@ from database.queries import (
 )
 
 router = Router()
+logger = logging.getLogger(__name__)
 
 GENDER_LABELS = {"male": "Erkak", "female": "Ayol"}
 TARGET_LABELS = {"male": "Erkaklar", "female": "Ayollar", "all": "Hammasi"}
@@ -52,16 +59,25 @@ async def show_next_profile(
         return
 
     await state.update_data(current_profile_id=profile["telegram_id"])
-    await message.answer_photo(
-        photo=profile["photo_id"],
-        caption=format_profile(profile),
-        reply_markup=get_search_keyboard(profile["telegram_id"]),
-        parse_mode="HTML",
-    )
+    try:
+        await message.answer_photo(
+            photo=profile["photo_id"],
+            caption=format_profile(profile),
+            reply_markup=get_search_keyboard(profile["telegram_id"]),
+            parse_mode="HTML",
+        )
+    except Exception as exc:
+        logger.exception("Anketa rasmini yuborib bo'lmadi: %s", exc)
+        await message.answer(
+            format_profile(profile),
+            reply_markup=get_search_keyboard(profile["telegram_id"]),
+            parse_mode="HTML",
+        )
 
 
 @router.message(F.text == "🔍 Sherik qidirish")
 async def start_search(message: Message, state: FSMContext, db: Database) -> None:
+    await state.set_state(None)
     await show_next_profile(message, state, db, message.from_user.id)
 
 
